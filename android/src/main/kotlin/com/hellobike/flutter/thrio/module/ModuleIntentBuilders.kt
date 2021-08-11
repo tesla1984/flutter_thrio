@@ -29,7 +29,20 @@ import com.hellobike.flutter.thrio.registry.RegistryMap
 
 internal object ModuleIntentBuilders {
 
-    val intentBuilders by lazy { RegistryMap<String, IntentBuilder>() }
+//    val intentBuilders by lazy { RegistryMap<String, IntentBuilder>() }
 
     var flutterIntentBuilder = FlutterIntentBuilder()
+
+    var nativeIntentBuilder = NativeIntentBuilder()
+}
+
+open class NativeIntentBuilder {
+
+    open fun isNativePath(path: String): Boolean {
+        return false;
+    }
+
+    open fun handleNativePath(path: String, settingsData: HashMap<String, Any?>) {
+
+    }
 }

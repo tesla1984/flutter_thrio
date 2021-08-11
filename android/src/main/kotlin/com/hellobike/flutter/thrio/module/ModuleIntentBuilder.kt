@@ -33,15 +33,19 @@ interface ModuleIntentBuilder {
 
     }
 
-    fun registerIntentBuilder(url: String, builder: IntentBuilder): VoidCallback {
-        return ModuleIntentBuilders.intentBuilders.registry(url, builder)
-    }
-
-    fun registerIntentBuilders(builders: Map<String, IntentBuilder>): VoidCallback {
-        return ModuleIntentBuilders.intentBuilders.registryAll(builders)
-    }
+//    fun registerIntentBuilder(url: String, builder: IntentBuilder): VoidCallback {
+//        return ModuleIntentBuilders.intentBuilders.registry(url, builder)
+//    }
+//
+//    fun registerIntentBuilders(builders: Map<String, IntentBuilder>): VoidCallback {
+//        return ModuleIntentBuilders.intentBuilders.registryAll(builders)
+//    }
 
     fun setFlutterIntentBuilder(builder: FlutterIntentBuilder) {
         ModuleIntentBuilders.flutterIntentBuilder = builder
+    }
+
+    fun setNativeIntentBuilder(builder: NativeIntentBuilder) {
+        ModuleIntentBuilders.nativeIntentBuilder = builder
     }
 }

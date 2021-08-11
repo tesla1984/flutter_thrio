@@ -39,14 +39,14 @@ open class ThrioModule {
         private val root by lazy { ThrioModule() }
 
         @JvmStatic
-        fun init(module: ThrioModule, context: Application, multiEngineEnabled: Boolean = false) {
+        fun init(module: ThrioModule, context: Application, multiEngineEnabled: Boolean = false, readyListener: EngineReadyListener? = null) {
             FlutterEngineFactory.isMultiEngineEnabled = multiEngineEnabled
             context.registerActivityLifecycleCallbacks(ActivityDelegate)
             root._moduleContext = ModuleContext()
             root.registerModule(module, root.moduleContext)
             root.initModule()
             if (!FlutterEngineFactory.isMultiEngineEnabled) {
-                root.startupFlutterEngine(context)
+                root.startupFlutterEngine(context, readyListener = readyListener)
             }
         }
     }
@@ -100,7 +100,8 @@ open class ThrioModule {
     @JvmOverloads
     protected fun startupFlutterEngine(
         context: Context,
-        entrypoint: String = NAVIGATION_FLUTTER_ENTRYPOINT_DEFAULT
+        entrypoint: String = NAVIGATION_FLUTTER_ENTRYPOINT_DEFAULT,
+        readyListener: EngineReadyListener? = null
     ) {
         FlutterEngineFactory.startup(
             context, entrypoint,
@@ -119,6 +120,7 @@ open class ThrioModule {
                             invokeMethod("set", canTransParams)
                         }
                     }
+                    readyListener?.onReady(params)
                 }
             })
 

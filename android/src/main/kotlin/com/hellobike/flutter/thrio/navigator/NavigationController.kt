@@ -117,70 +117,68 @@ internal object NavigationController : Application.ActivityLifecycleCallbacks {
                 it.animated = animated
             }
 
-            val builder = ModuleIntentBuilders.intentBuilders[url]
-                ?: ModuleIntentBuilders.flutterIntentBuilder
-
-            var entrypoint = NAVIGATION_NATIVE_ENTRYPOINT
-
-            val lastHolder = PageRoutes.lastRouteHolder()
-            val lastActivity = lastHolder?.activity?.get() ?: context?.get()
-            if (lastActivity == null) {
-                result?.invoke(null)
-                routeAction = RouteAction.NONE
-                return
+            val settingsData = hashMapOf<String, Any?>().also {
+                it.putAll(settings.toArguments())
             }
-            val lastEntrypoint = lastHolder?.entrypoint
 
-            if (builder is FlutterIntentBuilder) {
+            if (ModuleIntentBuilders.nativeIntentBuilder.isNativePath(url)) {
+                ModuleIntentBuilders.nativeIntentBuilder.handleNativePath(url, settingsData["params"] as HashMap<String, Any?>)
+            } else {
+                val builder =  ModuleIntentBuilders.flutterIntentBuilder
+
+                var entrypoint = NAVIGATION_NATIVE_ENTRYPOINT
+
+                val lastHolder = PageRoutes.lastRouteHolder()
+                val lastActivity = lastHolder?.activity?.get() ?: context?.get()
+                if (lastActivity == null) {
+                    result?.invoke(null)
+                    routeAction = RouteAction.NONE
+                    return
+                }
+                val lastEntrypoint = lastHolder?.entrypoint
+
                 entrypoint = if (FlutterEngineFactory.isMultiEngineEnabled) {
                     url.getEntrypoint()
                 } else {
                     NAVIGATION_FLUTTER_ENTRYPOINT_DEFAULT
                 }
-            }
 
-            val settingsData = hashMapOf<String, Any?>().also {
-                it.putAll(settings.toArguments())
-            }
-
-            val intent = if (lastActivity is ThrioActivity && lastEntrypoint == entrypoint) {
-                lastActivity.intent
-            } else {
-                builder.build(lastActivity, entrypoint).apply {
-                    if (!animated) {
-                        addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                val intent = if (lastActivity is ThrioActivity && lastEntrypoint == entrypoint) {
+                    lastActivity.intent
+                } else {
+                    builder.build(lastActivity, entrypoint).apply {
+                        if (!animated) {
+                            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                        }
                     }
+                }?.apply {
+                    putExtra(NAVIGATION_ROUTE_SETTINGS_KEY, settingsData)
+                    putExtra(NAVIGATION_ROUTE_ENTRYPOINT_KEY, entrypoint)
+                    putExtra(NAVIGATION_ROUTE_FROM_ENTRYPOINT_KEY, fromEntrypoint)
                 }
-            }?.apply {
-                putExtra(NAVIGATION_ROUTE_SETTINGS_KEY, settingsData)
-                putExtra(NAVIGATION_ROUTE_ENTRYPOINT_KEY, entrypoint)
-                putExtra(NAVIGATION_ROUTE_FROM_ENTRYPOINT_KEY, fromEntrypoint)
-            }
 
-            this.result = result
-            this.poppedResult = poppedResult
+                this.result = result
+                this.poppedResult = poppedResult
 
-            if (builder is FlutterIntentBuilder) {
                 if (PageRoutes.lastRoute == null && lastActivity is ThrioActivity) {
                     doPush(lastActivity, routeSettings = settings)
                 } else if (lastActivity is ThrioActivity && lastEntrypoint == entrypoint) {
                     doPush(lastActivity)
                 } else {
                     FlutterEngineFactory.startup(
-                        lastActivity,
-                        entrypoint,
-                        object : EngineReadyListener {
-                            override fun onReady(params: Any?) {
-                                if (params !is String || params != entrypoint) {
-                                    throw IllegalStateException("entrypoint must match.")
+                            lastActivity,
+                            entrypoint,
+                            object : EngineReadyListener {
+                                override fun onReady(params: Any?) {
+                                    if (params !is String || params != entrypoint) {
+                                        throw IllegalStateException("entrypoint must match.")
+                                    }
+                                    lastActivity.startActivity(intent)
                                 }
-                                lastActivity.startActivity(intent)
-                            }
-                        })
+                            })
                 }
-            } else {
-                lastActivity.startActivity(intent)
             }
+
         }
 
         internal fun doPush(activity: Activity, routeSettings: RouteSettings? = null) {

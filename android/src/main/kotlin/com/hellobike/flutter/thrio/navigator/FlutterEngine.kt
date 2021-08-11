@@ -36,7 +36,7 @@ data class FlutterEngine(
     private val entrypoint: String,
     private val readyListener: EngineReadyListener? = null
 ) {
-    private val engine = FlutterEngine(context)
+    val engine = FlutterEngine(context)
     internal var sendChannel: RouteSendChannel private set
     private val receiveChannel: RouteReceiveChannel
     internal val routeChannel: RouteObserverChannel
